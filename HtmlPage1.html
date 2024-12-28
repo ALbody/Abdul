@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تعرف على لغة الإشارة</title>
+    <!-- مكتبات التصميم -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- مكتبات التعلم الآلي -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/3.21.0/tensorflow.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/@mediapipe/hands/0.5.0/hands.min.js"></script>
+</head>
+<body class="container text-center mt-5">
+    <h1 class="mb-4">تعرف على لغة الإشارة للصم والبكم</h1>
+
+    <!-- الكاميرا الحية -->
+    <div class="row">
+        <div class="col-md-6">
+            <h3>الكاميرا الحية</h3>
+            <video id="video" autoplay class="border rounded shadow" width="640" height="480"></video>
+        </div>
+
+        <!-- النصوص -->
+        <div class="col-md-6">
+            <h3>النص المحول</h3>
+            <!-- Label لعرض النص -->
+            <label id="outputLabel" class="form-label">سيظهر النص المحول هنا...</label>
+            <button id="createButton" class="btn btn-primary btn-lg">تحويل الإشارة</button>
+        </div>
+    </div>
+
+    <script>
+        //  إعداد الكاميرا
+        const video = document.getElementById("video");
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((error) => console.error("فشل تشغيل الكاميرا:", error));
+
+        //  Mediapipe لتحليل اليدين
+        const hands = new Hands({ locateFile: (file) => https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file} });
+        hands.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults((results) => {
+            console.log("نتائج التعرف:", results);
+            // ** تحويل بيانات اليد إلى نص
+            const text = processHandData(results);
+            if (text) {
+                updateLabel(text);
+            }
+        });
+
+        const camera = new Camera(video, {
+            onFrame: async () => {
+                await hands.send({ image: video });
+            },
+            width: 640,
+            height: 480,
+        });
+        camera.start();
+
+        //  دالة معالجة بيانات اليد
+        function processHandData(results) {
+            if (results.multiHandLandmarks) {
+                // مثال لتحليل بسيط للإشارة
+                return "تم اكتشاف إشارة";
+            }
+            return "لم يتم اكتشاف إشارات";
+        }
+
+        //  تحديث النص في Label
+        function updateLabel(text) {
+            const outputLabel = document.getElementById("outputLabel");
+            outputLabel.textContent = text;
+        }
+
+        // زر لتحليل الإشارات عند الطلب
+        document.getElementById("createButton").addEventListener("click", () => {
+            updateLabel("جاري التحويل...");
+        });
+    </script>
+</body>
+</html>
